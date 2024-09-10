@@ -1,4 +1,3 @@
-// Xu Li
 import Lab1 from "./Lab1";
 import Lab2 from "./Lab2";
 import Lab3 from "./Lab3";
@@ -8,7 +7,8 @@ import { Route, Routes, Navigate } from "react-router";
 export default function Labs() {
     return (
         <div>
-            <h1>Xu Li's Labs</h1>
+            <h1>Labs</h1>
+            by Xu Li, Section: 02
             <TOC />
             <Routes>
                 <Route path="/" element={<Navigate to="Lab1" />} />
