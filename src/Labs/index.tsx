@@ -8,7 +8,7 @@ import { Route, Routes, Navigate } from "react-router";
 export default function Labs() {
     return (
         <div>
-            <h1>Labs</h1>
+            <h1>Xu Li's Labs</h1>
             <TOC />
             <Routes>
                 <Route path="/" element={<Navigate to="Lab1" />} />
