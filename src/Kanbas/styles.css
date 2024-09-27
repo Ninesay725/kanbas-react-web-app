@@ -28,3 +28,12 @@ body * {  font-family: Arial, Helvetica, sans-serif;  }
 .wd-lesson {
     border-left: 3px solid green !important;
 }
+
+.assignment-link {
+    color: black;
+    text-decoration: none;
+}
+
+.assignment-link:hover {
+    text-decoration: underline;
+}
