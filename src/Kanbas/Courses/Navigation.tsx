@@ -1,20 +1,46 @@
-import { Link } from "react-router-dom";
+import React from 'react';
+import { Link, useLocation } from "react-router-dom";
+
 export default function CoursesNavigation() {
+    const { pathname } = useLocation();
+
+    const isActive = (path: string): boolean => pathname.includes(path);
+
+    const getLinkClass = (path: string): string => `
+        list-group-item border border-0
+        ${isActive(path) ? "active" : "text-danger"}
+    `;
+
     return (
         <div id="wd-courses-navigation" className="wd list-group fs-5 rounded-0">
             <Link to="/Kanbas/Courses/1234/Home" id="wd-course-home-link"
-                  className="list-group-item active border border-0"> Home </Link>
+                  className={getLinkClass("/Home")}>
+                Home
+            </Link>
             <Link to="/Kanbas/Courses/1234/Modules" id="wd-course-modules-link"
-                  className="list-group-item text-danger border border-0"> Modules </Link>
+                  className={getLinkClass("/Modules")}>
+                Modules
+            </Link>
             <Link to="/Kanbas/Courses/1234/Piazza" id="wd-course-piazza-link"
-                  className="list-group-item text-danger border border-0"> Piazza </Link>
+                  className={getLinkClass("/Piazza")}>
+                Piazza
+            </Link>
             <Link to="/Kanbas/Courses/1234/Zoom" id="wd-course-zoom-link"
-                  className="list-group-item text-danger border border-0"> Zoom </Link>
-            <Link to="/Kanbas/Courses/1234/Assignments" id="wd-course-quizzes-link"
-                  className="list-group-item text-danger border border-0"> Assignments </Link>
-            <Link to="/Kanbas/Courses/1234/Quizzes" id="wd-course-assignments-link"
-                  className="list-group-item text-danger border border-0"> Quizzes </Link>
+                  className={getLinkClass("/Zoom")}>
+                Zoom
+            </Link>
+            <Link to="/Kanbas/Courses/1234/Assignments" id="wd-course-assignments-link"
+                  className={getLinkClass("/Assignments")}>
+                Assignments
+            </Link>
+            <Link to="/Kanbas/Courses/1234/Quizzes" id="wd-course-quizzes-link"
+                  className={getLinkClass("/Quizzes")}>
+                Quizzes
+            </Link>
             <Link to="/Kanbas/Courses/1234/People" id="wd-course-people-link"
-                  className="list-group-item text-danger border border-0" > People </Link>
+                  className={getLinkClass("/People")}>
+                People
+            </Link>
         </div>
-    );}
+    );
+}
