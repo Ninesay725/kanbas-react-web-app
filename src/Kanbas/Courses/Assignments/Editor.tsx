@@ -10,6 +10,12 @@ export default function AssignmentEditor() {
         return <div>Assignment not found</div>;
     }
 
+    const formatDateForInput = (dateString: string | undefined) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+    };
+
     return (
         <div className="container mt-4">
             <h2 className="mb-4">Assignment Editor</h2>
@@ -98,16 +104,16 @@ export default function AssignmentEditor() {
                                 </div>
                                 <div className="mb-3">
                                     <label htmlFor="wd-due-date" className="form-label">Due</label>
-                                    <input type="datetime-local" id="wd-due-date" className="form-control" value={assignment.dueDate || ''}/>
+                                    <input type="datetime-local" id="wd-due-date" className="form-control" value={formatDateForInput(assignment.dueDate)}/>
                                 </div>
                                 <div className="row">
                                     <div className="col-md-6 mb-3">
                                         <label htmlFor="wd-available-from" className="form-label">Available from</label>
-                                        <input type="datetime-local" id="wd-available-from" className="form-control" value={assignment.availableFromDate || ''}/>
+                                        <input type="datetime-local" id="wd-available-from" className="form-control" value={formatDateForInput(assignment.availableFromDate)}/>
                                     </div>
                                     <div className="col-md-6 mb-3">
                                         <label htmlFor="wd-available-until" className="form-label">Until</label>
-                                        <input type="datetime-local" id="wd-available-until" className="form-control" value={assignment.availableUntilDate || ''}/>
+                                        <input type="datetime-local" id="wd-available-until" className="form-control" value={formatDateForInput(assignment.availableUntilDate)}/>
                                     </div>
                                 </div>
                             </div>
