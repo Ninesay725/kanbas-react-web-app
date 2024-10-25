@@ -1,19 +1,70 @@
-import React from 'react';
-import { useParams, Link } from 'react-router-dom';
-import * as db from "../../Database";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { addAssignment, updateAssignment } from './reducer';
+import { formatDate, formatDateForInput } from "../../utils/dateUtils";
 
 export default function AssignmentEditor() {
     const { cid, aid } = useParams();
-    const assignment = db.assignments.find(a => a._id === aid);
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    
+    const [assignment, setAssignment] = useState({
+        title: "",
+        description: "",
+        points: 100,
+        dueDate: "",
+        availableFromDate: "",
+        availableUntilDate: "",
+        course: cid,
+    });
 
-    if (!assignment) {
-        return <div>Assignment not found</div>;
-    }
+    const existingAssignment = useSelector((state: any) =>
+        state.assignmentsReducer.assignments.find((a: any) => a._id === aid)
+    );
 
-    const formatDateForInput = (dateString: string | undefined) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+    useEffect(() => {
+        if (aid !== "new" && existingAssignment) {
+            setAssignment(existingAssignment);
+        }
+    }, [aid, existingAssignment]);
+
+    const handleSave = () => {
+        if (aid === "new") {
+            dispatch(addAssignment(assignment));
+        } else {
+            dispatch(updateAssignment({ ...assignment, _id: aid }));
+        }
+        navigate(`/Kanbas/Courses/${cid}/Assignments`);
+    };
+
+    const handleCancel = () => {
+        navigate(`/Kanbas/Courses/${cid}/Assignments`);
+    };
+
+    const handleDateChange = (field: string, value: string) => {
+        if (!value) {
+            setAssignment({
+                ...assignment,
+                [field]: ""
+            });
+            return;
+        }
+        // Create date object in local timezone
+        const date = new Date(value);
+        // Convert to ISO string but keep the local time
+        const isoString = new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            date.getHours(),
+            date.getMinutes()
+        ).toISOString();
+
+        setAssignment({
+            ...assignment,
+            [field]: isoString
+        });
     };
 
     return (
@@ -22,19 +73,36 @@ export default function AssignmentEditor() {
             <form>
                 <div className="mb-3">
                     <label htmlFor="wd-name" className="form-label">Assignment Name</label>
-                    <input id="wd-name" className="form-control" value={assignment.title} />
+                    <input
+                        id="wd-name"
+                        className="form-control"
+                        value={assignment.title}
+                        onChange={(e) => setAssignment({ ...assignment, title: e.target.value })}
+                    />
                 </div>
 
                 <div className="mb-3">
                     <label htmlFor="wd-description" className="form-label">Description</label>
-                    <textarea id="wd-description" className="form-control" rows={10} value={assignment.description || ''}>
+                    <textarea
+                        id="wd-description"
+                        className="form-control"
+                        rows={10}
+                        value={assignment.description || ''}
+                        onChange={(e) => setAssignment({ ...assignment, description: e.target.value })}
+                    >
                     </textarea>
                 </div>
 
                 <div className="mb-3 row">
                     <label htmlFor="wd-points" className="col-sm-2 col-form-label">Points</label>
                     <div className="col-sm-10">
-                        <input id="wd-points" type="number" className="form-control" value={assignment.points} />
+                        <input
+                            id="wd-points"
+                            type="number"
+                            className="form-control"
+                            value={assignment.points}
+                            onChange={(e) => setAssignment({ ...assignment, points: parseInt(e.target.value) })}
+                        />
                     </div>
                 </div>
 
@@ -104,16 +172,34 @@ export default function AssignmentEditor() {
                                 </div>
                                 <div className="mb-3">
                                     <label htmlFor="wd-due-date" className="form-label">Due</label>
-                                    <input type="datetime-local" id="wd-due-date" className="form-control" value={formatDateForInput(assignment.dueDate)}/>
+                                    <input 
+                                        type="datetime-local" 
+                                        id="wd-due-date" 
+                                        className="form-control" 
+                                        value={formatDateForInput(assignment.dueDate)}
+                                        onChange={(e) => handleDateChange('dueDate', e.target.value)}
+                                    />
                                 </div>
                                 <div className="row">
                                     <div className="col-md-6 mb-3">
                                         <label htmlFor="wd-available-from" className="form-label">Available from</label>
-                                        <input type="datetime-local" id="wd-available-from" className="form-control" value={formatDateForInput(assignment.availableFromDate)}/>
+                                        <input 
+                                            type="datetime-local" 
+                                            id="wd-available-from" 
+                                            className="form-control" 
+                                            value={formatDateForInput(assignment.availableFromDate)}
+                                            onChange={(e) => handleDateChange('availableFromDate', e.target.value)}
+                                        />
                                     </div>
                                     <div className="col-md-6 mb-3">
                                         <label htmlFor="wd-available-until" className="form-label">Until</label>
-                                        <input type="datetime-local" id="wd-available-until" className="form-control" value={formatDateForInput(assignment.availableUntilDate)}/>
+                                        <input 
+                                            type="datetime-local" 
+                                            id="wd-available-until" 
+                                            className="form-control" 
+                                            value={formatDateForInput(assignment.availableUntilDate)}
+                                            onChange={(e) => handleDateChange('availableUntilDate', e.target.value)}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -123,8 +209,12 @@ export default function AssignmentEditor() {
 
                 <hr className="my-4"/>
                 <div className="d-flex justify-content-end gap-2">
-                    <Link to={`/Kanbas/Courses/${cid}/Assignments`} className="btn btn-secondary">Cancel</Link>
-                    <Link to={`/Kanbas/Courses/${cid}/Assignments`} className="btn btn-danger">Save</Link>
+                    <button onClick={handleCancel} className="btn btn-secondary">
+                        Cancel
+                    </button>
+                    <button onClick={handleSave} className="btn btn-danger">
+                        Save
+                    </button>
                 </div>
             </form>
         </div>

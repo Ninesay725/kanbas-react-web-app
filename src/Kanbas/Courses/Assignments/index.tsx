@@ -1,27 +1,28 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { FaSearch, FaEllipsisV } from 'react-icons/fa';
+import { FaSearch, FaEllipsisV, FaTrash } from 'react-icons/fa';
 import { BsGripVertical } from 'react-icons/bs';
 import GreenCheckmark from '../Modules/GreenCheckmark';
-import * as db from "../../Database";
-
-function formatDate(dateString: string | undefined) {
-    if (!dateString) return 'Not set';
-    const date = new Date(dateString);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const month = months[date.getMonth()];
-    const day = date.getDate();
-    let hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'pm' : 'am';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    return `${month} ${day} at ${hours}:${minutes}${ampm}`;
-}
+import { useDispatch, useSelector } from "react-redux";
+import { deleteAssignment } from "./reducer";
+import { isFaculty } from "../../utils/permissions";
+import { formatDate } from "../../utils/dateUtils";
 
 export default function Assignments() {
     const { cid } = useParams();
-    const assignments = db.assignments.filter(assignment => assignment.course === cid);
+    const dispatch = useDispatch();
+    const assignments = useSelector((state: any) => 
+        state.assignmentsReducer.assignments.filter(
+            (assignment: any) => assignment.course === cid
+        )
+    );
+    const { currentUser } = useSelector((state: any) => state.accountReducer);
+
+    const handleDelete = (assignmentId: string) => {
+        if (window.confirm("Are you sure you want to delete this assignment?")) {
+            dispatch(deleteAssignment(assignmentId));
+        }
+    };
 
     return (
         <div className="container-fluid mt-4">
@@ -39,10 +40,14 @@ export default function Assignments() {
                         />
                     </div>
                 </div>
-                <div className="col-auto">
-                    <button className="btn btn-secondary me-2">+ Group</button>
-                    <button className="btn btn-danger">+ Assignment</button>
-                </div>
+                {isFaculty(currentUser) && (
+                    <div className="col-auto">
+                        <button className="btn btn-secondary me-2">+ Group</button>
+                        <Link to={`/Kanbas/Courses/${cid}/Assignments/new`} className="btn btn-danger">
+                            + Assignment
+                        </Link>
+                    </div>
+                )}
             </div>
 
             {/* Card */}
@@ -67,7 +72,7 @@ export default function Assignments() {
                 </div>
 
                 <ul className="list-group list-group-flush">
-                    {assignments.map((assignment) => (
+                    {assignments.map((assignment: any) => (
                         <li key={assignment._id} className="list-group-item position-relative p-0">
                             <div className="d-flex position-relative">
                                 <div
@@ -100,7 +105,14 @@ export default function Assignments() {
                                         <span className="me-2">
                                             <GreenCheckmark />
                                         </span>
-                                        <FaEllipsisV />
+                                        {isFaculty(currentUser) && (
+                                            <button 
+                                                className="btn btn-sm btn-light"
+                                                onClick={() => handleDelete(assignment._id)}
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
