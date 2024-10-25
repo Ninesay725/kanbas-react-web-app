@@ -6,11 +6,13 @@ import ModuleControlButtons from "./ModuleControlButtons";
 import LessonControlButtons from "./LessonControlButtons";
 import { useSelector, useDispatch } from "react-redux";
 import { addModule, editModule, updateModule, deleteModule } from "./reducer";
+import { isFaculty } from "../../utils/permissions";
 
 export default function Modules() {
     const { cid } = useParams();
     const [moduleName, setModuleName] = useState("");
     const { modules } = useSelector((state: any) => state.modulesReducer);
+    const { currentUser } = useSelector((state: any) => state.accountReducer);
     const dispatch = useDispatch();
 
     return (
@@ -33,7 +35,7 @@ export default function Modules() {
                                 <div>
                                     <BsGripVertical className="me-2 fs-3" />
                                     {!module.editing && module.name}
-                                    {module.editing && (
+                                    {module.editing && isFaculty(currentUser) && (
                                         <input 
                                             className="form-control w-50 d-inline-block"
                                             onChange={(e) => dispatch(

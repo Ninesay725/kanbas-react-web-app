@@ -17,7 +17,7 @@ export default function ModuleControlButtons(
 
     return (
         <div className="float-end">
-            {isFaculty(currentUser) ? (
+            {isFaculty(currentUser) && (
                 <>
                     <FaPencil 
                         onClick={() => editModule(moduleId)} 
@@ -31,8 +31,6 @@ export default function ModuleControlButtons(
                     <BsPlus className="fs-4" />
                     <IoEllipsisVertical className="fs-4" />
                 </>
-            ) : (
-                <GreenCheckmark />
             )}
         </div>
     );

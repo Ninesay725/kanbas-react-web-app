@@ -102,16 +102,18 @@ export default function Assignments() {
                                         </div>
                                     </div>
                                     <div className="d-flex align-items-center">
-                                        <span className="me-2">
-                                            <GreenCheckmark />
-                                        </span>
                                         {isFaculty(currentUser) && (
-                                            <button 
-                                                className="btn btn-sm btn-light"
-                                                onClick={() => handleDelete(assignment._id)}
-                                            >
-                                                <FaTrash />
-                                            </button>
+                                            <>
+                                                <span className="me-2">
+                                                    <GreenCheckmark />
+                                                </span>
+                                                <button 
+                                                    className="btn btn-sm btn-light"
+                                                    onClick={() => handleDelete(assignment._id)}
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
