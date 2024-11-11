@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addAssignment, updateAssignment } from './reducer';
 import { formatDate, formatDateForInput } from "../../utils/dateUtils";
+import * as client from "./client";
 
 export default function AssignmentEditor() {
     const { cid, aid } = useParams();
@@ -29,13 +30,20 @@ export default function AssignmentEditor() {
         }
     }, [aid, existingAssignment]);
 
-    const handleSave = () => {
-        if (aid === "new") {
-            dispatch(addAssignment(assignment));
-        } else {
-            dispatch(updateAssignment({ ...assignment, _id: aid }));
+    const handleSave = async () => {
+        try {
+            if (aid === "new") {
+                const newAssignment = await client.createAssignment(cid as string, assignment);
+                dispatch(addAssignment(newAssignment));
+            } else {
+                // Editing existing assignment
+                await client.updateAssignment({ ...assignment, _id: aid });
+                dispatch(updateAssignment({ ...assignment, _id: aid }));
+            }
+            navigate(`/Kanbas/Courses/${cid}/Assignments`);
+        } catch (error) {
+            console.error("Error saving assignment:", error);
         }
-        navigate(`/Kanbas/Courses/${cid}/Assignments`);
     };
 
     const handleCancel = () => {

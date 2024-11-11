@@ -1,10 +1,11 @@
-[{
-  "_id": "123",
-  "username": "iron_man",
-  "password": "stark123",
-  "firstName": "Tony",
-  "lastName": "Stark",
-  "email": "tony@stark.com",
+[
+  {
+    "_id": "123",
+    "username": "iron_man",
+    "password": "stark123",
+    "firstName": "Tony",
+    "lastName": "Stark",
+    "email": "tony@stark.com",
   "dob": "1970-05-29T00:00:00.000Z",
   "role": "FACULTY",
   "loginId": "001234561S",
@@ -108,5 +109,6 @@
   "loginId": "001234569S",
   "section": "S101",
   "lastActivity": "2020-11-11",
-  "totalActivity": "21:32:43"
-}]
+    "totalActivity": "21:32:43"
+}
+]

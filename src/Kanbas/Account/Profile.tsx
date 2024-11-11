@@ -3,12 +3,18 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setCurrentUser } from "./reducer";
 import { formatDateForInput } from "../utils/dateUtils";
+import * as client from "./client";
 
 export default function Profile() {
     const [profile, setProfile] = useState<any>({});
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { currentUser } = useSelector((state: any) => state.accountReducer);
+
+    const updateProfile = async () => {
+        const updatedProfile = await client.updateUser(profile);
+        dispatch(setCurrentUser(updatedProfile));
+    };
 
     const fetchProfile = () => {
         if (!currentUser) {
@@ -18,7 +24,8 @@ export default function Profile() {
         setProfile(currentUser);
     };
 
-    const signout = () => {
+    const signout = async () => {
+        await client.signout();
         dispatch(setCurrentUser(null));
         navigate("/Kanbas/Account/Signin");
     };
@@ -33,9 +40,7 @@ export default function Profile() {
             });
             return;
         }
-        // Create date object in local timezone
         const date = new Date(value);
-        // Convert to ISO string but keep the local time
         const isoString = new Date(
             date.getFullYear(),
             date.getMonth(),
@@ -51,7 +56,7 @@ export default function Profile() {
     };
 
     return (
-        <div className="wd-profile-screen">
+        <div id="wd-profile-screen">
             <h3>Profile</h3>
             {profile && (
                 <div>
@@ -124,10 +129,10 @@ export default function Profile() {
                         <option value="TA">TA</option>
                     </select>
                     <button 
-                        onClick={() => dispatch(setCurrentUser({ ...profile }))} 
-                        className="btn btn-success w-100 mb-2"
+                        onClick={updateProfile} 
+                        className="btn btn-primary w-100 mb-2"
                     >
-                        Save
+                        Update
                     </button>
                     <button 
                         onClick={signout} 

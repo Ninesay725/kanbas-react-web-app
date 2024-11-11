@@ -1,26 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FaSearch, FaEllipsisV, FaTrash } from 'react-icons/fa';
 import { BsGripVertical } from 'react-icons/bs';
 import GreenCheckmark from '../Modules/GreenCheckmark';
 import { useDispatch, useSelector } from "react-redux";
-import { deleteAssignment } from "./reducer";
+import { deleteAssignment, setAssignments } from "./reducer";
 import { isFaculty } from "../../utils/permissions";
 import { formatDate } from "../../utils/dateUtils";
+import * as client from "./client";
 
 export default function Assignments() {
     const { cid } = useParams();
     const dispatch = useDispatch();
     const assignments = useSelector((state: any) => 
-        state.assignmentsReducer.assignments.filter(
-            (assignment: any) => assignment.course === cid
-        )
+        state.assignmentsReducer.assignments
     );
     const { currentUser } = useSelector((state: any) => state.accountReducer);
 
-    const handleDelete = (assignmentId: string) => {
+    const fetchAssignments = async () => {
+        const assignments = await client.findAssignmentsForCourse(cid as string);
+        dispatch(setAssignments(assignments));
+    };
+
+    useEffect(() => {
+        fetchAssignments();
+    }, [cid]);
+
+    const handleDelete = async (assignmentId: string) => {
         if (window.confirm("Are you sure you want to delete this assignment?")) {
-            dispatch(deleteAssignment(assignmentId));
+            try {
+                await client.deleteAssignment(assignmentId);
+                dispatch(deleteAssignment(assignmentId));
+            } catch (error) {
+                console.error("Error deleting assignment:", error);
+            }
         }
     };
 
