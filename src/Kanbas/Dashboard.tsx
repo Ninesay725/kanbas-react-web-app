@@ -22,6 +22,7 @@ export default function Dashboard(
     const dispatch = useDispatch();
     const [allCourses, setAllCourses] = useState<any[]>([]);
     const [displayedCourses, setDisplayedCourses] = useState<any[]>([]);
+    const [localCourses, setLocalCourses] = useState<any[]>(courses);
 
     const fetchAllCourses = async () => {
         try {
@@ -47,18 +48,26 @@ export default function Dashboard(
     }, []);
 
     useEffect(() => {
-        if (showAllCourses) {
-            setDisplayedCourses(allCourses);
+        setLocalCourses(courses);
+    }, [courses]);
+
+    useEffect(() => {
+        if (isFaculty(currentUser)) {
+            setDisplayedCourses(localCourses);
         } else {
-            const enrolledCourses = allCourses.filter(course => 
-                enrollments.some((enrollment: any) => 
-                    enrollment.user === currentUser._id && 
-                    enrollment.course === course._id
-                )
-            );
-            setDisplayedCourses(enrolledCourses);
+            if (showAllCourses) {
+                setDisplayedCourses(allCourses);
+            } else {
+                const enrolledCourses = allCourses.filter(course => 
+                    enrollments.some((enrollment: any) => 
+                        enrollment.user === currentUser._id && 
+                        enrollment.course === course._id
+                    )
+                );
+                setDisplayedCourses(enrolledCourses);
+            }
         }
-    }, [showAllCourses, enrollments, allCourses, currentUser]);
+    }, [showAllCourses, enrollments, allCourses, localCourses, currentUser]);
 
     const handleEnroll = async (courseId: string) => {
         try {
@@ -88,16 +97,41 @@ export default function Dashboard(
         );
     };
 
-    const handleAddNewCourse = () => {
-        addNewCourse();
-        setCourse({
-            _id: "1234", 
-            name: "New Course", 
-            number: "New Number",
-            startDate: "2023-09-10", 
-            endDate: "2023-12-15", 
-            description: "New Description",
-        });
+    const handleAddNewCourse = async () => {
+        try {
+            await addNewCourse();
+            setLocalCourses([...localCourses, course]);
+            setCourse({
+                _id: "1234", 
+                name: "New Course", 
+                number: "New Number",
+                startDate: "2023-09-10", 
+                endDate: "2023-12-15", 
+                description: "New Description",
+            });
+        } catch (error) {
+            console.error("Error adding course:", error);
+        }
+    };
+
+    const handleDeleteCourse = async (courseId: string) => {
+        try {
+            await deleteCourse(courseId);
+            setLocalCourses(localCourses.filter(c => c._id !== courseId));
+        } catch (error) {
+            console.error("Error deleting course:", error);
+        }
+    };
+
+    const handleUpdateCourse = async () => {
+        try {
+            await updateCourse();
+            setLocalCourses(localCourses.map(c => 
+                c._id === course._id ? course : c
+            ));
+        } catch (error) {
+            console.error("Error updating course:", error);
+        }
     };
 
     return (
@@ -123,7 +157,7 @@ export default function Dashboard(
                             Add
                         </button>
                         <button className="btn btn-warning float-end me-2"
-                            onClick={updateCourse} 
+                            onClick={handleUpdateCourse}
                             id="wd-update-course-click">
                             Update
                         </button>
@@ -193,7 +227,7 @@ export default function Dashboard(
                                                 <button 
                                                     onClick={(event) => {
                                                         event.preventDefault();
-                                                        deleteCourse(course._id);
+                                                        handleDeleteCourse(course._id);
                                                     }} 
                                                     className="btn btn-danger"
                                                     id="wd-delete-course-click"
