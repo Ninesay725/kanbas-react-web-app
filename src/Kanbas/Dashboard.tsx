@@ -1,138 +1,48 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { isFaculty } from "./utils/permissions";
 import * as client from "./Courses/Enrollments/client";
 import * as courseClient from "./Courses/client";
-import { setEnrollments, enroll, unenroll, toggleShowAllCourses } from "./Courses/Enrollments/reducer";
 
 export default function Dashboard(
-    { courses, course, setCourse, addNewCourse, deleteCourse, updateCourse }: {
+    { courses, course, setCourse, addNewCourse, deleteCourse, updateCourse, enrolling, setEnrolling, updateEnrollment }: {
         courses: any[];
         course: any;
         setCourse: (course: any) => void;
         addNewCourse: () => void;
         deleteCourse: (course: any) => void;
         updateCourse: () => void;
+        enrolling: boolean;
+        setEnrolling: (enrolling: boolean) => void;
+        updateEnrollment: (courseId: string, enrolled: boolean) => void;
     }
 ) {
     const { currentUser } = useSelector((state: any) => state.accountReducer);
-    const { showAllCourses, enrollments } = useSelector((state: any) => state.enrollmentsReducer);
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const [allCourses, setAllCourses] = useState<any[]>([]);
     const [displayedCourses, setDisplayedCourses] = useState<any[]>([]);
-    const [localCourses, setLocalCourses] = useState<any[]>(courses);
-
-    const fetchAllCourses = async () => {
-        try {
-            const courses = await courseClient.fetchAllCourses();
-            setAllCourses(courses);
-        } catch (error) {
-            console.error("Error fetching all courses:", error);
-        }
-    };
-
-    const fetchEnrollments = async () => {
-        try {
-            const enrollments = await client.findAllEnrollments();
-            dispatch(setEnrollments(enrollments));
-        } catch (error) {
-            console.error("Error fetching enrollments:", error);
-        }
-    };
 
     useEffect(() => {
-        fetchAllCourses();
-        fetchEnrollments();
-    }, []);
-
-    useEffect(() => {
-        setLocalCourses(courses);
-    }, [courses]);
-
-    useEffect(() => {
-        if (isFaculty(currentUser)) {
-            setDisplayedCourses(localCourses);
-        } else {
-            if (showAllCourses) {
-                setDisplayedCourses(allCourses);
-            } else {
-                const enrolledCourses = allCourses.filter(course => 
-                    enrollments.some((enrollment: any) => 
-                        enrollment.user === currentUser._id && 
-                        enrollment.course === course._id
-                    )
-                );
-                setDisplayedCourses(enrolledCourses);
-            }
+        if (currentUser) {
+            setDisplayedCourses(courses);
         }
-    }, [showAllCourses, enrollments, allCourses, localCourses, currentUser]);
+    }, [courses, currentUser]);
 
     const handleEnroll = async (courseId: string) => {
-        try {
-            const enrollment = await client.enrollStudentInCourse(currentUser._id, courseId);
-            dispatch(enroll(enrollment));
-            await fetchEnrollments();
-        } catch (error) {
-            console.error("Error enrolling in course:", error);
+        if (currentUser) {
+            await updateEnrollment(courseId, true);
         }
     };
 
     const handleUnenroll = async (courseId: string) => {
-        try {
-            await client.unenrollStudentFromCourse(currentUser._id, courseId);
-            dispatch(unenroll({ studentId: currentUser._id, courseId }));
-            await fetchEnrollments();
-        } catch (error) {
-            console.error("Error unenrolling from course:", error);
+        if (currentUser) {
+            await updateEnrollment(courseId, false);
         }
     };
 
-    const isEnrolled = (courseId: string) => {
-        return enrollments.some(
-            (enrollment: any) => 
-                enrollment.user === currentUser._id &&
-                enrollment.course === courseId
-        );
-    };
-
-    const handleAddNewCourse = async () => {
-        try {
-            await addNewCourse();
-            setLocalCourses([...localCourses, course]);
-            setCourse({
-                _id: "1234", 
-                name: "New Course", 
-                number: "New Number",
-                startDate: "2023-09-10", 
-                endDate: "2023-12-15", 
-                description: "New Description",
-            });
-        } catch (error) {
-            console.error("Error adding course:", error);
-        }
-    };
-
-    const handleDeleteCourse = async (courseId: string) => {
-        try {
-            await deleteCourse(courseId);
-            setLocalCourses(localCourses.filter(c => c._id !== courseId));
-        } catch (error) {
-            console.error("Error deleting course:", error);
-        }
-    };
-
-    const handleUpdateCourse = async () => {
-        try {
-            await updateCourse();
-            setLocalCourses(localCourses.map(c => 
-                c._id === course._id ? course : c
-            ));
-        } catch (error) {
-            console.error("Error updating course:", error);
-        }
-    };
+    if (!currentUser) {
+        return null; // or return a loading spinner or redirect to login
+    }
 
     return (
         <div id="wd-dashboard">
@@ -141,9 +51,9 @@ export default function Dashboard(
                 {currentUser?.role === "STUDENT" && (
                     <button 
                         className="btn btn-primary"
-                        onClick={() => dispatch(toggleShowAllCourses())}
+                        onClick={() => setEnrolling(!enrolling)}
                     >
-                        {showAllCourses ? "Show My Courses" : "Show All Courses"}
+                        {enrolling ? "Show My Courses" : "Show All Courses"}
                     </button>
                 )}
             </div>
@@ -153,11 +63,11 @@ export default function Dashboard(
                     <h5>New Course
                         <button className="btn btn-primary float-end"
                             id="wd-add-new-course-click"
-                            onClick={handleAddNewCourse}>
+                            onClick={addNewCourse}>
                             Add
                         </button>
                         <button className="btn btn-warning float-end me-2"
-                            onClick={handleUpdateCourse}
+                            onClick={updateCourse}
                             id="wd-update-course-click">
                             Update
                         </button>
@@ -172,7 +82,7 @@ export default function Dashboard(
             <h2 id="wd-dashboard-published">
                 {isFaculty(currentUser) 
                     ? "Published Courses" 
-                    : (showAllCourses ? "All Courses" : "My Courses")} 
+                    : (enrolling ? "All Courses" : "My Courses")} 
                 ({displayedCourses.length})
             </h2>
             <hr />
@@ -184,11 +94,11 @@ export default function Dashboard(
                             <div className="card rounded-3 overflow-hidden">
                                 <div 
                                     onClick={() => {
-                                        if (isEnrolled(course._id) || isFaculty(currentUser)) {
+                                        if (course.enrolled || isFaculty(currentUser)) {
                                             navigate(`/Kanbas/Courses/${course._id}/Home`);
                                         }
                                     }}
-                                    style={{ cursor: isEnrolled(course._id) || isFaculty(currentUser) ? 'pointer' : 'default' }}
+                                    style={{ cursor: course.enrolled || isFaculty(currentUser) ? 'pointer' : 'default' }}
                                 >
                                     <img src={course.image || "/images/default-course.jpg"} 
                                         width="100%" height={160} 
@@ -227,7 +137,7 @@ export default function Dashboard(
                                                 <button 
                                                     onClick={(event) => {
                                                         event.preventDefault();
-                                                        handleDeleteCourse(course._id);
+                                                        deleteCourse(course._id);
                                                     }} 
                                                     className="btn btn-danger"
                                                     id="wd-delete-course-click"
@@ -238,7 +148,7 @@ export default function Dashboard(
                                         </div>
                                     ) : (
                                         <div className="d-flex">
-                                            {isEnrolled(course._id) ? (
+                                            {course.enrolled ? (
                                                 <>
                                                     <button 
                                                         onClick={() => navigate(`/Kanbas/Courses/${course._id}/Home`)}
