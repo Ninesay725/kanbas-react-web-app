@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, Route, Routes, useParams, useLocation } from "react-router-dom";
 import { FaAlignJustify } from "react-icons/fa";
 import CoursesNavigation from "./Navigation";
@@ -7,11 +7,29 @@ import Home from "./Home";
 import Assignments from "./Assignments";
 import AssignmentEditor from "./Assignments/Editor";
 import PeopleTable from "./People/Table";
+import * as client from "./client";
 
 export default function Courses({ courses }: { courses: any[]; }) {
     const { cid } = useParams();
     const course = courses.find((course) => course._id === cid);
     const { pathname } = useLocation();
+    const [users, setUsers] = useState<any[]>([]);
+
+    const fetchUsers = async () => {
+        if (cid) {
+            try {
+                const users = await client.findUsersForCourse(cid);
+                setUsers(users);
+            } catch (error) {
+                console.error("Error fetching users:", error);
+                setUsers([]);
+            }
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, [cid]);
 
     return (
         <div id="wd-courses">
@@ -31,7 +49,7 @@ export default function Courses({ courses }: { courses: any[]; }) {
                         <Route path="Modules" element={<Modules/>}/>
                         <Route path="Assignments" element={<Assignments/>}/>
                         <Route path="Assignments/:aid" element={<AssignmentEditor/>}/>
-                        <Route path="People" element={<PeopleTable />} />
+                        <Route path="People" element={<PeopleTable users={users} />} />
                     </Routes>
                 </div>
             </div>

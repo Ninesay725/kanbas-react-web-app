@@ -29,4 +29,4 @@ export const findEnrollmentByCourseAndStudent = async (courseId: string, student
         `${ENROLLMENTS_API}/${courseId}/${studentId}`
     );
     return response.data;
-}; 
+};

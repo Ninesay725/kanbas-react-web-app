@@ -18,8 +18,13 @@ export default function Modules() {
     const dispatch = useDispatch();
 
     const saveModule = async (module: any) => {
-        await modulesClient.updateModule(module);
-        dispatch(updateModule(module));
+        try {
+            const { _id, name } = module;
+            await modulesClient.updateModule(_id, { name });
+            dispatch(updateModule({ ...module, editing: false }));
+        } catch (error) {
+            console.error("Error saving module:", error);
+        }
     };
 
     const removeModule = async (moduleId: string) => {

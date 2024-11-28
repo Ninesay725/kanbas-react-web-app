@@ -69,8 +69,10 @@ export const createUser = async (user: any) => {
     return response.data;
 };
 
-export const findCoursesForUser = async (userId: string) => {
-    const response = await axiosWithCredentials.get(`${USERS_API}/${userId}/courses`);
+export const findCoursesForUser = async (userId: string, showAll: boolean = false) => {
+    const response = await axiosWithCredentials.get(
+        `${USERS_API}/${userId}/courses${showAll ? '?all=true' : ''}`
+    );
     return response.data;
 };
 

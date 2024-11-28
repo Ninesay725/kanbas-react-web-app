@@ -58,7 +58,7 @@ export default function Users() {
             </button>
             <h3>Users</h3>
             <input onChange={(e) => filterUsersByName(e.target.value)} placeholder="Search people"
-              className="form-control float-start w-25 me-2 wd-filter-by-name" />
+                className="form-control float-start w-25 me-2 wd-filter-by-name" />
             <select 
                 value={role} 
                 onChange={(e) => filterUsersByRole(e.target.value)}
