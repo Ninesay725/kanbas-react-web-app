@@ -7,6 +7,8 @@ import Home from "./Home";
 import Assignments from "./Assignments";
 import AssignmentEditor from "./Assignments/Editor";
 import PeopleTable from "./People/Table";
+import QuizList from "./Quizzes";
+import QuizEditor from "./Quizzes/Editor";
 import * as client from "./client";
 
 export default function Courses({ courses }: { courses: any[]; }) {
@@ -50,6 +52,8 @@ export default function Courses({ courses }: { courses: any[]; }) {
                         <Route path="Assignments" element={<Assignments/>}/>
                         <Route path="Assignments/:aid" element={<AssignmentEditor/>}/>
                         <Route path="People" element={<PeopleTable users={users} />} />
+                        <Route path="Quizzes" element={<QuizList />} />
+                        <Route path="Quizzes/:qid" element={<QuizEditor />} />
                     </Routes>
                 </div>
             </div>
