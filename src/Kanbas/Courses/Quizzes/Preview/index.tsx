@@ -4,6 +4,7 @@ import { Button, Form, Card, Alert, ProgressBar, Badge, ListGroup } from "react-
 import * as client from "../client";
 import { useSelector } from "react-redux";
 import { isFaculty } from "../../../utils/permissions";
+import { FaCheck, FaRegCircle, FaCircle } from "react-icons/fa";
 
 interface Question {
     _id?: string;
@@ -235,6 +236,43 @@ function QuizPreview() {
         }
     };
 
+    const renderQuestionStatus = () => {
+        if (!quiz) return null;
+        return (
+            <div className="mb-4">
+                <h5>Question Progress:</h5>
+                <div className="d-flex flex-wrap gap-2">
+                    {quiz.questions.map((question, index) => {
+                        const isAnswered = answers[question._id || ""] !== undefined;
+                        const isCurrentQuestion = index === currentQuestionIndex;
+                        return (
+                            <div 
+                                key={question._id || index}
+                                className={`d-flex align-items-center justify-content-center p-2 rounded ${
+                                    isCurrentQuestion ? 'bg-primary text-white' : 
+                                    isAnswered ? 'bg-success text-white' : 'bg-light'
+                                }`}
+                                style={{ width: '40px', height: '40px', cursor: 'pointer' }}
+                                onClick={() => quiz.oneQuestionAtATime ? null : setCurrentQuestionIndex(index)}
+                            >
+                                {isAnswered ? (
+                                    <FaCheck />
+                                ) : (
+                                    isCurrentQuestion ? <FaCircle /> : <FaRegCircle />
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                <ProgressBar 
+                    className="mt-2"
+                    now={(answeredQuestions.size / quiz.questions.length) * 100}
+                    label={`${Math.round((answeredQuestions.size / quiz.questions.length) * 100)}%`}
+                />
+            </div>
+        );
+    };
+
     if (!quiz) {
         return <div>Loading quiz...</div>;
     }
@@ -311,215 +349,121 @@ function QuizPreview() {
 
     return (
         <div className="container mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                {timeRemaining !== null && (
-                    <Badge bg={timeRemaining < 300 ? "danger" : "primary"} className="p-2">
-                        Time Remaining: {formatTime(timeRemaining)}
+            {timeRemaining !== null && (
+                <Alert variant="info" className="d-flex justify-content-between align-items-center">
+                    <span>Time Remaining: {formatTime(timeRemaining)}</span>
+                    <Badge bg="primary">
+                        Question {currentQuestionIndex + 1} of {quiz.questions.length}
                     </Badge>
-                )}
-                <ProgressBar 
-                    now={(answeredQuestions.size / quiz.questions.length) * 100} 
-                    label={`${answeredQuestions.size}/${quiz.questions.length} Questions Answered`}
-                    className="flex-grow-1 mx-3"
-                />
-            </div>
+                </Alert>
+            )}
 
-            {quiz.oneQuestionAtATime ? (
-                <div className="d-flex">
-                    <div className="question-navigation me-3" style={{ width: '200px' }}>
-                        <ListGroup>
-                            {quiz.questions.map((q, index) => (
-                                <ListGroup.Item
-                                    key={q._id}
-                                    action
-                                    active={currentQuestionIndex === index}
-                                    variant={answeredQuestions.has(q._id || "") ? "success" : undefined}
-                                    onClick={() => setCurrentQuestionIndex(index)}
-                                    disabled={quiz.lockQuestionsAfterAnswering && answeredQuestions.has(q._id || "")}
-                                >
-                                    Question {index + 1}
-                                </ListGroup.Item>
+            {renderQuestionStatus()}
+
+            <Card>
+                <Card.Header className="d-flex justify-content-between align-items-center">
+                    <h5 className="mb-0">Question {currentQuestionIndex + 1}</h5>
+                    <span>{currentQuestion.points} points</span>
+                </Card.Header>
+                <Card.Body>
+                    <Card.Title>{currentQuestion.title}</Card.Title>
+                    <Card.Text>{currentQuestion.question}</Card.Text>
+
+                    {currentQuestion.type === "MULTIPLE_CHOICE" && currentQuestion.choices && (
+                        <Form.Group>
+                            {currentQuestion.choices.map((choice, i) => (
+                                <Form.Check
+                                    key={i}
+                                    type="radio"
+                                    id={`${currentQuestion._id}-${i}`}
+                                    name={`question-${currentQuestion._id}`}
+                                    label={choice}
+                                    checked={answers[currentQuestion._id || ""] === choice}
+                                    onChange={() => handleAnswerChange(currentQuestion._id || "", choice)}
+                                    disabled={submitted}
+                                />
                             ))}
-                        </ListGroup>
-                    </div>
-                    <div className="flex-grow-1">
-                        <div className="mb-3">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <h4>Question {currentQuestionIndex + 1} of {quiz.questions.length}</h4>
-                                <span>{currentQuestion.points} pts</span>
-                            </div>
-                            <Card>
-                                <Card.Body>
-                                    <Card.Title>{currentQuestion.title}</Card.Title>
-                                    <Card.Text>{currentQuestion.question}</Card.Text>
+                        </Form.Group>
+                    )}
 
-                                    {currentQuestion.type === "MULTIPLE_CHOICE" && currentQuestion.choices && (
-                                        <Form.Group>
-                                            {currentQuestion.choices.map((choice, i) => (
-                                                <Form.Check
-                                                    key={i}
-                                                    type="radio"
-                                                    id={`${currentQuestion._id}-${i}`}
-                                                    name={`question-${currentQuestion._id}`}
-                                                    label={choice}
-                                                    checked={answers[currentQuestion._id || ""] === choice}
-                                                    onChange={() => handleAnswerChange(currentQuestion._id || "", choice)}
-                                                    disabled={submitted}
-                                                />
-                                            ))}
-                                        </Form.Group>
-                                    )}
+                    {currentQuestion.type === "TRUE_FALSE" && (
+                        <Form.Group>
+                            <Form.Check
+                                type="radio"
+                                id={`${currentQuestion._id}-true`}
+                                name={`question-${currentQuestion._id}`}
+                                label="True"
+                                checked={answers[currentQuestion._id || ""] === "True"}
+                                onChange={() => handleAnswerChange(currentQuestion._id || "", "True")}
+                                disabled={submitted}
+                            />
+                            <Form.Check
+                                type="radio"
+                                id={`${currentQuestion._id}-false`}
+                                name={`question-${currentQuestion._id}`}
+                                label="False"
+                                checked={answers[currentQuestion._id || ""] === "False"}
+                                onChange={() => handleAnswerChange(currentQuestion._id || "", "False")}
+                                disabled={submitted}
+                            />
+                        </Form.Group>
+                    )}
 
-                                    {currentQuestion.type === "TRUE_FALSE" && (
-                                        <Form.Group>
-                                            <Form.Check
-                                                type="radio"
-                                                id={`${currentQuestion._id}-true`}
-                                                name={`question-${currentQuestion._id}`}
-                                                label="True"
-                                                checked={answers[currentQuestion._id || ""] === "True"}
-                                                onChange={() => handleAnswerChange(currentQuestion._id || "", "True")}
-                                                disabled={submitted}
-                                            />
-                                            <Form.Check
-                                                type="radio"
-                                                id={`${currentQuestion._id}-false`}
-                                                name={`question-${currentQuestion._id}`}
-                                                label="False"
-                                                checked={answers[currentQuestion._id || ""] === "False"}
-                                                onChange={() => handleAnswerChange(currentQuestion._id || "", "False")}
-                                                disabled={submitted}
-                                            />
-                                        </Form.Group>
-                                    )}
+                    {currentQuestion.type === "FILL_IN_BLANK" && (
+                        <Form.Group>
+                            <Form.Control
+                                type="text"
+                                value={answers[currentQuestion._id || ""] || ""}
+                                onChange={(e) => handleAnswerChange(currentQuestion._id || "", e.target.value)}
+                                placeholder="Enter your answer"
+                                disabled={submitted}
+                            />
+                        </Form.Group>
+                    )}
 
-                                    {currentQuestion.type === "FILL_IN_BLANK" && (
-                                        <Form.Group>
-                                            <Form.Control
-                                                type="text"
-                                                value={answers[currentQuestion._id || ""] || ""}
-                                                onChange={(e) => handleAnswerChange(currentQuestion._id || "", e.target.value)}
-                                                placeholder="Enter your answer"
-                                                disabled={submitted}
-                                            />
-                                        </Form.Group>
-                                    )}
-                                </Card.Body>
-                            </Card>
-                        </div>
-                        <div className="d-flex justify-content-between">
-                            <Button 
-                                variant="secondary" 
-                                onClick={handlePreviousQuestion}
-                                disabled={currentQuestionIndex === 0}
-                            >
-                                Previous
-                            </Button>
-                            {currentQuestionIndex === quiz.questions.length - 1 ? (
-                                <Button variant="success" onClick={handleSubmit} disabled={submitted}>
-                                    Submit Quiz
-                                </Button>
+                    {submitted && (
+                        <div className="mt-3">
+                            <strong>Your answer: </strong>
+                            {answers[currentQuestion._id || ""] || "No answer"}
+                            <br />
+                            <strong>Correct answer: </strong>
+                            {currentQuestion.correctAnswer}
+                            <br />
+                            <strong>Result: </strong>
+                            {answers[currentQuestion._id || ""] === currentQuestion.correctAnswer ? (
+                                <span className="text-success">Correct</span>
                             ) : (
-                                <Button variant="primary" onClick={handleNextQuestion}>
-                                    Next
-                                </Button>
+                                <span className="text-danger">Incorrect</span>
                             )}
                         </div>
-                    </div>
-                </div>
-            ) : (
-                <>
-                    {quiz.questions.map((question, index) => (
-                        <Card key={question._id || index} className="mb-3">
-                            <Card.Header className="d-flex justify-content-between align-items-center">
-                                <span>Question {index + 1}</span>
-                                <span>{question.points} pts</span>
-                            </Card.Header>
-                            <Card.Body>
-                                <Card.Title>{question.title}</Card.Title>
-                                <Card.Text>{question.question}</Card.Text>
-
-                                {question.type === "MULTIPLE_CHOICE" && question.choices && (
-                                    <Form.Group>
-                                        {question.choices.map((choice, i) => (
-                                            <Form.Check
-                                                key={i}
-                                                type="radio"
-                                                id={`${question._id}-${i}`}
-                                                name={`question-${question._id}`}
-                                                label={choice}
-                                                checked={answers[question._id || ""] === choice}
-                                                onChange={() => handleAnswerChange(question._id || "", choice)}
-                                                disabled={submitted}
-                                            />
-                                        ))}
-                                    </Form.Group>
-                                )}
-
-                                {question.type === "TRUE_FALSE" && (
-                                    <Form.Group>
-                                        <Form.Check
-                                            type="radio"
-                                            id={`${question._id}-true`}
-                                            name={`question-${question._id}`}
-                                            label="True"
-                                            checked={answers[question._id || ""] === "True"}
-                                            onChange={() => handleAnswerChange(question._id || "", "True")}
-                                            disabled={submitted}
-                                        />
-                                        <Form.Check
-                                            type="radio"
-                                            id={`${question._id}-false`}
-                                            name={`question-${question._id}`}
-                                            label="False"
-                                            checked={answers[question._id || ""] === "False"}
-                                            onChange={() => handleAnswerChange(question._id || "", "False")}
-                                            disabled={submitted}
-                                        />
-                                    </Form.Group>
-                                )}
-
-                                {question.type === "FILL_IN_BLANK" && (
-                                    <Form.Group>
-                                        <Form.Control
-                                            type="text"
-                                            value={answers[question._id || ""] || ""}
-                                            onChange={(e) => handleAnswerChange(question._id || "", e.target.value)}
-                                            placeholder="Enter your answer"
-                                            disabled={submitted}
-                                        />
-                                    </Form.Group>
-                                )}
-
-                                {submitted && (
-                                    <div className="mt-3">
-                                        <strong>Your answer: </strong>
-                                        {answers[question._id || ""] || "No answer"}
-                                        <br />
-                                        <strong>Correct answer: </strong>
-                                        {question.correctAnswer}
-                                        <br />
-                                        <strong>Result: </strong>
-                                        {answers[question._id || ""] === question.correctAnswer ? (
-                                            <span className="text-success">Correct</span>
-                                        ) : (
-                                            <span className="text-danger">Incorrect</span>
-                                        )}
-                                    </div>
-                                )}
-                            </Card.Body>
-                        </Card>
-                    ))}
-
-                    {!submitted && (
-                        <div className="d-flex justify-content-end mb-4">
-                            <Button variant="success" onClick={handleSubmit}>
-                                Submit Quiz
-                            </Button>
-                        </div>
                     )}
-                </>
-            )}
+                </Card.Body>
+            </Card>
+
+            <div className="d-flex justify-content-between mt-3">
+                <Button
+                    variant="secondary"
+                    onClick={handlePreviousQuestion}
+                    disabled={currentQuestionIndex === 0 || quiz.oneQuestionAtATime}
+                >
+                    Previous
+                </Button>
+                <div>
+                    {currentQuestionIndex === quiz.questions.length - 1 ? (
+                        <Button variant="primary" onClick={handleSubmit}>
+                            Submit Quiz
+                        </Button>
+                    ) : (
+                        <Button
+                            variant="primary"
+                            onClick={handleNextQuestion}
+                            disabled={quiz.oneQuestionAtATime && !answers[currentQuestion._id || ""]}
+                        >
+                            Next
+                        </Button>
+                    )}
+                </div>
+            </div>
 
             {submitted && score !== null && (
                 <Alert variant="info">

@@ -90,3 +90,41 @@ export const findQuizAttemptById = async (attemptId: string) => {
     );
     return response.data;
 };
+
+export const copyQuizToCourse = async (quizId: string, targetCourseId: string) => {
+    try {
+        // First, get the original quiz
+        const originalQuiz = await findQuizById(quizId);
+        
+        // Create a new quiz object without the _id field
+        const { _id, course, ...quizData } = originalQuiz;
+        
+        // Create the copy in the target course
+        const newQuiz = {
+            ...quizData,
+            course: targetCourseId,
+            title: `${quizData.title} (Copy)`
+        };
+        
+        // Create the new quiz
+        const response = await createQuiz(targetCourseId, newQuiz);
+        
+        // If the original quiz has questions, copy them too
+        if (originalQuiz.questions && originalQuiz.questions.length > 0) {
+            for (const question of originalQuiz.questions) {
+                const { _id, ...questionData } = question;
+                await addQuestionToQuiz(response._id, questionData);
+            }
+        }
+        
+        return response;
+    } catch (error) {
+        console.error("Error in copyQuizToCourse:", error);
+        throw error;
+    }
+};
+
+export const findAllCourses = async () => {
+    const response = await axios.get(`${API_BASE}/courses`);
+    return response.data;
+};
