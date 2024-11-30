@@ -1,326 +1,324 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { FaCheckCircle, FaBan, FaPlus, FaTrash } from "react-icons/fa";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import { Button, Form, Card, Nav } from "react-bootstrap";
+import { FaEllipsisV, FaCheckCircle, FaPlus } from "react-icons/fa";
 import * as client from "../client";
-
-interface Question {
-    _id?: string;
-    title: string;
-    type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "FILL_IN_BLANK";
-    points: number;
-    question: string;
-    choices: string[];
-    correctAnswer: string;
-}
+import { formatDateForInput } from "../../../utils/dateUtils";
+import QuizQuestions from "./QuizQuestions";
+import Preview from "../Preview";
 
 interface Quiz {
-    _id: string;
+    _id?: string;
     title: string;
-    description: string;
+    description?: string;
     points: number;
-    dueDate?: Date;
-    availableFromDate?: Date;
-    availableUntilDate?: Date;
+    dueDate?: string;
+    availableFromDate?: string;
+    availableUntilDate?: string;
     published: boolean;
-    quizType: "GRADED_QUIZ" | "PRACTICE_QUIZ" | "GRADED_SURVEY" | "UNGRADED_SURVEY";
+    questions: any[];
+    course: string;
+    type: string;
+    assignmentGroup: string;
     shuffleAnswers: boolean;
-    timeLimit?: number;
+    timeLimit: number;
     multipleAttempts: boolean;
-    maxAttempts?: number;
+    maxAttempts: number;
     showCorrectAnswers: boolean;
+    accessCode: string;
     oneQuestionAtATime: boolean;
-    questions: Question[];
+    webcamRequired: boolean;
+    lockQuestionsAfterAnswering: boolean;
 }
 
 function QuizEditor() {
     const { cid, qid } = useParams();
     const navigate = useNavigate();
-    const [quiz, setQuiz] = useState<Quiz | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState("details");
+    const [quiz, setQuiz] = useState<Quiz>({
+        title: "New Quiz",
+        description: "",
+        points: 100,
+        published: false,
+        questions: [],
+        course: cid || "",
+        type: "GRADED_QUIZ",
+        assignmentGroup: "QUIZZES",
+        shuffleAnswers: true,
+        timeLimit: 20,
+        multipleAttempts: false,
+        maxAttempts: 1,
+        showCorrectAnswers: true,
+        accessCode: "",
+        oneQuestionAtATime: true,
+        webcamRequired: false,
+        lockQuestionsAfterAnswering: false
+    });
 
-    useEffect(() => {
-        const fetchQuiz = async () => {
+    const fetchQuiz = async () => {
+        if (qid) {
             try {
-                if (qid) {
-                    const fetchedQuiz = await client.findQuizById(qid);
-                    setQuiz(fetchedQuiz);
-                }
+                const response = await client.findQuizById(qid);
+                setQuiz(response);
             } catch (error) {
                 console.error("Error fetching quiz:", error);
-            } finally {
-                setLoading(false);
             }
-        };
+        }
+    };
+
+    useEffect(() => {
         fetchQuiz();
     }, [qid]);
 
-    const handleQuizUpdate = async (updatedQuiz: Quiz) => {
+    const handleSave = async () => {
         try {
-            await client.updateQuiz(updatedQuiz._id, updatedQuiz);
-            setQuiz(updatedQuiz);
+            if (qid) {
+                await client.updateQuiz(qid, quiz);
+            } else {
+                await client.createQuiz(cid || "", quiz);
+            }
+            navigate(`/Kanbas/Courses/${cid}/Quizzes`);
         } catch (error) {
-            console.error("Error updating quiz:", error);
+            console.error("Error saving quiz:", error);
         }
     };
 
-    const handleAddQuestion = async () => {
-        if (!quiz) return;
-
-        const newQuestion: Question = {
-            title: "New Question",
-            type: "MULTIPLE_CHOICE",
-            points: 10,
-            question: "Enter your question here",
-            choices: ["Option 1", "Option 2", "Option 3", "Option 4"],
-            correctAnswer: "Option 1"
-        };
-
+    const handlePublish = async () => {
         try {
-            await client.addQuestionToQuiz(quiz._id, newQuestion);
-            const updatedQuiz = await client.findQuizById(quiz._id);
-            setQuiz(updatedQuiz);
+            const updatedQuiz = { ...quiz, published: true };
+            if (qid) {
+                await client.updateQuiz(qid, updatedQuiz);
+            } else {
+                await client.createQuiz(cid || "", updatedQuiz);
+            }
+            navigate(`/Kanbas/Courses/${cid}/Quizzes`);
         } catch (error) {
-            console.error("Error adding question:", error);
+            console.error("Error publishing quiz:", error);
         }
     };
 
-    const handleDeleteQuestion = async (questionId: string) => {
-        if (!quiz) return;
+    const renderDetailsTab = () => (
+        <Form>
+            {/* Basic Quiz Information */}
+            <Form.Group className="mb-3">
+                <Form.Label>Quiz Title</Form.Label>
+                <Form.Control
+                    type="text"
+                    value={quiz.title}
+                    onChange={(e) => setQuiz({ ...quiz, title: e.target.value })}
+                />
+            </Form.Group>
 
-        try {
-            await client.deleteQuizQuestion(quiz._id, questionId);
-            const updatedQuiz = await client.findQuizById(quiz._id);
-            setQuiz(updatedQuiz);
-        } catch (error) {
-            console.error("Error deleting question:", error);
-        }
-    };
+            <Form.Group className="mb-3">
+                <Form.Label>Description</Form.Label>
+                <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={quiz.description}
+                    onChange={(e) => setQuiz({ ...quiz, description: e.target.value })}
+                />
+            </Form.Group>
 
-    const handleQuestionUpdate = async (questionId: string, updatedQuestion: Question) => {
-        if (!quiz) return;
+            {/* Quiz Settings */}
+            <Form.Group className="mb-3">
+                <Form.Label>Quiz Type</Form.Label>
+                <Form.Select
+                    value={quiz.type}
+                    onChange={(e) => setQuiz({ ...quiz, type: e.target.value })}
+                >
+                    <option value="GRADED_QUIZ">Graded Quiz</option>
+                    <option value="PRACTICE_QUIZ">Practice Quiz</option>
+                    <option value="GRADED_SURVEY">Graded Survey</option>
+                    <option value="UNGRADED_SURVEY">Ungraded Survey</option>
+                </Form.Select>
+            </Form.Group>
 
-        try {
-            await client.updateQuizQuestion(quiz._id, questionId, updatedQuestion);
-            const updatedQuiz = await client.findQuizById(quiz._id);
-            setQuiz(updatedQuiz);
-        } catch (error) {
-            console.error("Error updating question:", error);
-        }
-    };
+            <Form.Group className="mb-3">
+                <Form.Label>Assignment Group</Form.Label>
+                <Form.Select
+                    value={quiz.assignmentGroup}
+                    onChange={(e) => setQuiz({ ...quiz, assignmentGroup: e.target.value })}
+                >
+                    <option value="QUIZZES">Quizzes</option>
+                    <option value="EXAMS">Exams</option>
+                    <option value="ASSIGNMENTS">Assignments</option>
+                    <option value="PROJECT">Project</option>
+                </Form.Select>
+            </Form.Group>
 
-    if (loading) {
-        return <div>Loading quiz...</div>;
-    }
+            <Form.Group className="mb-3">
+                <Form.Label>Points</Form.Label>
+                <Form.Control
+                    type="number"
+                    value={quiz.points}
+                    onChange={(e) => setQuiz({ ...quiz, points: parseInt(e.target.value) })}
+                />
+            </Form.Group>
 
-    if (!quiz) {
-        return <div>Quiz not found</div>;
-    }
+            {/* Quiz Options */}
+            <Form.Group className="mb-3">
+                <Form.Check
+                    type="checkbox"
+                    label="Shuffle Answers"
+                    checked={quiz.shuffleAnswers}
+                    onChange={(e) => setQuiz({ ...quiz, shuffleAnswers: e.target.checked })}
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Label>Time Limit (minutes)</Form.Label>
+                <Form.Control
+                    type="number"
+                    value={quiz.timeLimit}
+                    onChange={(e) => setQuiz({ ...quiz, timeLimit: parseInt(e.target.value) })}
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Check
+                    type="checkbox"
+                    label="Allow Multiple Attempts"
+                    checked={quiz.multipleAttempts}
+                    onChange={(e) => setQuiz({ ...quiz, multipleAttempts: e.target.checked })}
+                />
+            </Form.Group>
+
+            {quiz.multipleAttempts && (
+                <Form.Group className="mb-3">
+                    <Form.Label>Maximum Attempts</Form.Label>
+                    <Form.Control
+                        type="number"
+                        value={quiz.maxAttempts}
+                        onChange={(e) => setQuiz({ ...quiz, maxAttempts: parseInt(e.target.value) })}
+                    />
+                </Form.Group>
+            )}
+
+            <Form.Group className="mb-3">
+                <Form.Check
+                    type="checkbox"
+                    label="Show Correct Answers"
+                    checked={quiz.showCorrectAnswers}
+                    onChange={(e) => setQuiz({ ...quiz, showCorrectAnswers: e.target.checked })}
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Label>Access Code</Form.Label>
+                <Form.Control
+                    type="text"
+                    value={quiz.accessCode}
+                    onChange={(e) => setQuiz({ ...quiz, accessCode: e.target.value })}
+                    placeholder="Leave blank for no access code"
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Check
+                    type="checkbox"
+                    label="One Question at a Time"
+                    checked={quiz.oneQuestionAtATime}
+                    onChange={(e) => setQuiz({ ...quiz, oneQuestionAtATime: e.target.checked })}
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Check
+                    type="checkbox"
+                    label="Require Webcam"
+                    checked={quiz.webcamRequired}
+                    onChange={(e) => setQuiz({ ...quiz, webcamRequired: e.target.checked })}
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Check
+                    type="checkbox"
+                    label="Lock Questions After Answering"
+                    checked={quiz.lockQuestionsAfterAnswering}
+                    onChange={(e) => setQuiz({ ...quiz, lockQuestionsAfterAnswering: e.target.checked })}
+                />
+            </Form.Group>
+
+            {/* Due Dates */}
+            <Form.Group className="mb-3">
+                <Form.Label>Due Date</Form.Label>
+                <Form.Control
+                    type="datetime-local"
+                    value={formatDateForInput(quiz.dueDate)}
+                    onChange={(e) => setQuiz({ ...quiz, dueDate: e.target.value })}
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Label>Available From</Form.Label>
+                <Form.Control
+                    type="datetime-local"
+                    value={formatDateForInput(quiz.availableFromDate)}
+                    onChange={(e) => setQuiz({ ...quiz, availableFromDate: e.target.value })}
+                />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+                <Form.Label>Available Until</Form.Label>
+                <Form.Control
+                    type="datetime-local"
+                    value={formatDateForInput(quiz.availableUntilDate)}
+                    onChange={(e) => setQuiz({ ...quiz, availableUntilDate: e.target.value })}
+                />
+            </Form.Group>
+        </Form>
+    );
 
     return (
-        <div className="p-4">
+        <div className="container-fluid mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2>{quiz.title}</h2>
                 <div>
-                    <button
-                        className="btn btn-success me-2"
-                        onClick={() => handleQuizUpdate({ ...quiz, published: !quiz.published })}
-                    >
-                        {quiz.published ? (
-                            <>
-                                <FaCheckCircle className="me-2" />
-                                Published
-                            </>
-                        ) : (
-                            <>
-                                <FaBan className="me-2" />
-                                Unpublished
-                            </>
-                        )}
-                    </button>
-                    <button
-                        className="btn btn-danger"
-                        onClick={() => navigate(`/Kanbas/Courses/${cid}/Quizzes`)}
-                    >
-                        Cancel
-                    </button>
+                    <Button variant="success" className="me-2" onClick={handlePublish}>
+                        Publish
+                    </Button>
+                    <Button variant="primary" className="me-2" onClick={handleSave}>
+                        Save
+                    </Button>
+                    <Link to={`/Kanbas/Courses/${cid}/Quizzes/${qid}/preview`}>
+                        <Button variant="primary">Preview</Button>
+                    </Link>
                 </div>
             </div>
 
-            <div className="mb-4">
-                <div className="mb-3">
-                    <label className="form-label">Title</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        value={quiz.title}
-                        onChange={(e) => handleQuizUpdate({ ...quiz, title: e.target.value })}
-                    />
-                </div>
-                <div className="mb-3">
-                    <label className="form-label">Description</label>
-                    <textarea
-                        className="form-control"
-                        value={quiz.description}
-                        onChange={(e) => handleQuizUpdate({ ...quiz, description: e.target.value })}
-                    />
-                </div>
-                <div className="row mb-3">
-                    <div className="col">
-                        <label className="form-label">Quiz Type</label>
-                        <select
-                            className="form-select"
-                            value={quiz.quizType}
-                            onChange={(e) => handleQuizUpdate({
-                                ...quiz,
-                                quizType: e.target.value as Quiz["quizType"]
-                            })}
-                        >
-                            <option value="GRADED_QUIZ">Graded Quiz</option>
-                            <option value="PRACTICE_QUIZ">Practice Quiz</option>
-                            <option value="GRADED_SURVEY">Graded Survey</option>
-                            <option value="UNGRADED_SURVEY">Ungraded Survey</option>
-                        </select>
-                    </div>
-                    <div className="col">
-                        <label className="form-label">Points</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            value={quiz.points}
-                            onChange={(e) => handleQuizUpdate({
-                                ...quiz,
-                                points: parseInt(e.target.value)
-                            })}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            <div className="mb-4">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h3>Questions</h3>
-                    <button className="btn btn-success" onClick={handleAddQuestion}>
-                        <FaPlus className="me-2" />
-                        Add Question
-                    </button>
-                </div>
-
-                {quiz.questions.map((question, index) => (
-                    <div key={question._id} className="card mb-3">
-                        <div className="card-header d-flex justify-content-between align-items-center">
-                            <h5 className="mb-0">Question {index + 1}</h5>
-                            <button
-                                className="btn btn-danger btn-sm"
-                                onClick={() => question._id && handleDeleteQuestion(question._id)}
+            <Card>
+                <Card.Header>
+                    <Nav variant="tabs">
+                        <Nav.Item>
+                            <Nav.Link
+                                active={activeTab === "details"}
+                                onClick={() => setActiveTab("details")}
                             >
-                                <FaTrash />
-                            </button>
-                        </div>
-                        <div className="card-body">
-                            <div className="mb-3">
-                                <label className="form-label">Question Title</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={question.title}
-                                    onChange={(e) => question._id && handleQuestionUpdate(
-                                        question._id,
-                                        { ...question, title: e.target.value }
-                                    )}
-                                />
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label">Question Type</label>
-                                <select
-                                    className="form-select"
-                                    value={question.type}
-                                    onChange={(e) => question._id && handleQuestionUpdate(
-                                        question._id,
-                                        { ...question, type: e.target.value as Question["type"] }
-                                    )}
-                                >
-                                    <option value="MULTIPLE_CHOICE">Multiple Choice</option>
-                                    <option value="TRUE_FALSE">True/False</option>
-                                    <option value="FILL_IN_BLANK">Fill in the Blank</option>
-                                </select>
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label">Question Text</label>
-                                <textarea
-                                    className="form-control"
-                                    value={question.question}
-                                    onChange={(e) => question._id && handleQuestionUpdate(
-                                        question._id,
-                                        { ...question, question: e.target.value }
-                                    )}
-                                />
-                            </div>
-                            {question.type === "MULTIPLE_CHOICE" && (
-                                <div className="mb-3">
-                                    <label className="form-label">Choices</label>
-                                    {question.choices.map((choice, choiceIndex) => (
-                                        <div key={choiceIndex} className="input-group mb-2">
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                value={choice}
-                                                onChange={(e) => {
-                                                    const newChoices = [...question.choices];
-                                                    newChoices[choiceIndex] = e.target.value;
-                                                    question._id && handleQuestionUpdate(
-                                                        question._id,
-                                                        { ...question, choices: newChoices }
-                                                    );
-                                                }}
-                                            />
-                                            <div className="input-group-text">
-                                                <input
-                                                    type="radio"
-                                                    checked={question.correctAnswer === choice}
-                                                    onChange={() => question._id && handleQuestionUpdate(
-                                                        question._id,
-                                                        { ...question, correctAnswer: choice }
-                                                    )}
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                            {question.type === "TRUE_FALSE" && (
-                                <div className="mb-3">
-                                    <label className="form-label">Correct Answer</label>
-                                    <select
-                                        className="form-select"
-                                        value={question.correctAnswer}
-                                        onChange={(e) => question._id && handleQuestionUpdate(
-                                            question._id,
-                                            { ...question, correctAnswer: e.target.value }
-                                        )}
-                                    >
-                                        <option value="true">True</option>
-                                        <option value="false">False</option>
-                                    </select>
-                                </div>
-                            )}
-                            {question.type === "FILL_IN_BLANK" && (
-                                <div className="mb-3">
-                                    <label className="form-label">Correct Answer</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={question.correctAnswer}
-                                        onChange={(e) => question._id && handleQuestionUpdate(
-                                            question._id,
-                                            { ...question, correctAnswer: e.target.value }
-                                        )}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
+                                Details
+                            </Nav.Link>
+                        </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link
+                                active={activeTab === "questions"}
+                                onClick={() => setActiveTab("questions")}
+                            >
+                                Questions
+                            </Nav.Link>
+                        </Nav.Item>
+                    </Nav>
+                </Card.Header>
+                <Card.Body>
+                    {activeTab === "details" ? (
+                        renderDetailsTab()
+                    ) : (
+                        <QuizQuestions
+                            questions={quiz.questions}
+                            setQuestions={(questions) => setQuiz({ ...quiz, questions })}
+                        />
+                    )}
+                </Card.Body>
+            </Card>
         </div>
     );
 }
