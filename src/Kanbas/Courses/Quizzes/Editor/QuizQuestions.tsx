@@ -10,6 +10,7 @@ interface Question {
     question: string;
     choices?: string[];
     correctAnswer: string;
+    correctAnswers?: string[];
 }
 
 interface QuizQuestionsProps {
@@ -30,7 +31,8 @@ function QuizQuestions({ questions, setQuestions }: QuizQuestionsProps) {
             points: 1,
             question: "",
             choices: ["", ""],
-            correctAnswer: ""
+            correctAnswer: "",
+            correctAnswers: []
         };
         setQuestions([...questions, newQuestion]);
         setEditingIndex(questions.length);
@@ -87,6 +89,38 @@ function QuizQuestions({ questions, setQuestions }: QuizQuestionsProps) {
         }
     };
 
+    const addBlankAnswer = () => {
+        if (tempQuestion && tempQuestion.type === "FILL_IN_BLANK") {
+            setTempQuestion({
+                ...tempQuestion,
+                correctAnswers: [...(tempQuestion.correctAnswers || []), ""]
+            });
+        }
+    };
+
+    const updateBlankAnswer = (answerIndex: number, newText: string) => {
+        if (tempQuestion && tempQuestion.type === "FILL_IN_BLANK" && tempQuestion.correctAnswers) {
+            const updatedAnswers = [...tempQuestion.correctAnswers];
+            updatedAnswers[answerIndex] = newText;
+            setTempQuestion({
+                ...tempQuestion,
+                correctAnswers: updatedAnswers,
+                correctAnswer: updatedAnswers.join('|')
+            });
+        }
+    };
+
+    const deleteBlankAnswer = (answerIndex: number) => {
+        if (tempQuestion && tempQuestion.type === "FILL_IN_BLANK" && tempQuestion.correctAnswers) {
+            const updatedAnswers = tempQuestion.correctAnswers.filter((_, i) => i !== answerIndex);
+            setTempQuestion({
+                ...tempQuestion,
+                correctAnswers: updatedAnswers,
+                correctAnswer: updatedAnswers.join('|')
+            });
+        }
+    };
+
     const renderQuestionEditor = () => {
         if (!tempQuestion) return null;
 
@@ -101,15 +135,19 @@ function QuizQuestions({ questions, setQuestions }: QuizQuestionsProps) {
                                 let updatedQuestion: Question = {
                                     ...tempQuestion,
                                     type,
-                                    correctAnswer: ""
+                                    correctAnswer: "",
+                                    correctAnswers: []
                                 };
                                 
                                 if (type === "MULTIPLE_CHOICE") {
                                     updatedQuestion.choices = ["", ""];
+                                    updatedQuestion.correctAnswers = undefined;
                                 } else if (type === "TRUE_FALSE") {
                                     updatedQuestion.choices = ["True", "False"];
-                                } else {
-                                    updatedQuestion.choices = [];
+                                    updatedQuestion.correctAnswers = undefined;
+                                } else if (type === "FILL_IN_BLANK") {
+                                    updatedQuestion.choices = undefined;
+                                    updatedQuestion.correctAnswers = [""];
                                 }
                                 
                                 setTempQuestion(updatedQuestion);
@@ -220,15 +258,34 @@ function QuizQuestions({ questions, setQuestions }: QuizQuestionsProps) {
                 )}
 
                 {tempQuestion.type === "FILL_IN_BLANK" && (
-                    <Form.Group>
-                        <Form.Label>Correct Answer</Form.Label>
-                        <Form.Control
-                            type="text"
-                            value={tempQuestion.correctAnswer}
-                            onChange={(e) => setTempQuestion({ ...tempQuestion, correctAnswer: e.target.value })}
-                            placeholder="Enter the correct answer"
-                        />
-                    </Form.Group>
+                    <div>
+                        <Form.Label>Correct Answers</Form.Label>
+                        <p className="text-muted small">Add multiple possible correct answers. The answer will be marked correct if it matches any of these answers.</p>
+                        {(tempQuestion.correctAnswers || []).map((answer, answerIndex) => (
+                            <Form.Group key={answerIndex} className="mb-2">
+                                <div className="d-flex align-items-center">
+                                    <Form.Control
+                                        type="text"
+                                        value={answer}
+                                        onChange={(e) => updateBlankAnswer(answerIndex, e.target.value)}
+                                        placeholder="Enter a correct answer"
+                                    />
+                                    {(tempQuestion.correctAnswers?.length || 0) > 1 && (
+                                        <Button
+                                            variant="link"
+                                            className="text-danger"
+                                            onClick={() => deleteBlankAnswer(answerIndex)}
+                                        >
+                                            <FaTimes />
+                                        </Button>
+                                    )}
+                                </div>
+                            </Form.Group>
+                        ))}
+                        <Button variant="link" onClick={addBlankAnswer}>
+                            Add Another Correct Answer
+                        </Button>
+                    </div>
                 )}
             </div>
         );
@@ -302,7 +359,7 @@ function QuizQuestions({ questions, setQuestions }: QuizQuestionsProps) {
                                 disabled
                             />
                             <small className="text-muted mt-2 d-block">
-                                Correct answer: {question.correctAnswer}
+                                Correct answers: {question.correctAnswers?.join(' or ')}
                             </small>
                         </div>
                     )}

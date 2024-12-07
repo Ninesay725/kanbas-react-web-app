@@ -119,10 +119,17 @@ function QuizPreview() {
         fetchAttempts();
     }, [currentUser, qid]);
 
+    const isQuizClosed = (quiz: Quiz): boolean => {
+        const now = new Date();
+        const dueDate = quiz.dueDate ? new Date(quiz.dueDate) : null;
+        return dueDate ? now > dueDate : false;
+    };
+
     const canAttemptQuiz = () => {
         if (!quiz) return false;
         if (!quiz.published) return false;
         if (currentUser?.role === "FACULTY" || currentUser?.role === "ADMIN") return true;
+        if (isQuizClosed(quiz)) return false;
         if (!quiz.multipleAttempts && attemptsCount > 0) return false;
         if (quiz.maxAttempts && attemptsCount >= quiz.maxAttempts) return false;
         return true;
@@ -304,6 +311,7 @@ function QuizPreview() {
                             <strong>Allowed Attempts:</strong> {quiz.multipleAttempts ? `${quiz.maxAttempts} attempts` : "1 attempt"}<br />
                             <strong>Due Date:</strong> {quiz.dueDate ? new Date(quiz.dueDate).toLocaleString() : "Not set"}<br />
                             <strong>Available From:</strong> {quiz.availableFromDate ? new Date(quiz.availableFromDate).toLocaleString() : "Not set"}<br />
+                            <strong>Status:</strong> {isQuizClosed(quiz) ? <span className="text-danger">Closed</span> : <span className="text-success">Open</span>}
                         </div>
                     </Card.Body>
                 </Card>
@@ -322,7 +330,13 @@ function QuizPreview() {
                     </Alert>
                 )}
 
-                {currentUser?.role !== "FACULTY" && !canAttemptQuiz() && (
+                {currentUser?.role !== "FACULTY" && isQuizClosed(quiz) && (
+                    <Alert variant="danger">
+                        This quiz is closed. The due date has passed.
+                    </Alert>
+                )}
+
+                {currentUser?.role !== "FACULTY" && !canAttemptQuiz() && !isQuizClosed(quiz) && (
                     <Alert variant="warning">
                         {!quiz.multipleAttempts && attemptsCount > 0 ? 
                             "You have already used your attempt for this quiz." :

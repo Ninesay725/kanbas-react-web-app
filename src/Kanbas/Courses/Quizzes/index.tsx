@@ -21,6 +21,21 @@ interface Quiz {
     assignmentGroup?: "QUIZZES" | "EXAMS" | "ASSIGNMENTS" | "PROJECT";
 }
 
+function getQuizStatus(quiz: Quiz): { status: string; className: string } {
+    const now = new Date();
+    const dueDate = quiz.dueDate ? new Date(quiz.dueDate) : null;
+    
+    if (!quiz.published) {
+        return { status: 'Not Published', className: 'text-secondary' };
+    }
+    
+    if (dueDate && now > dueDate) {
+        return { status: 'Closed', className: 'text-danger' };
+    }
+    
+    return { status: 'Published', className: 'text-success' };
+}
+
 function QuizList() {
     const { cid } = useParams();
     const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -287,8 +302,8 @@ function QuizList() {
                                                     </Link>
                                                 </h6>
                                                 <small>
-                                                    <span className="text-danger">
-                                                        <strong>{quiz.published ? 'Published' : 'Not Published'}</strong>
+                                                    <span className={getQuizStatus(quiz).className}>
+                                                        <strong>{getQuizStatus(quiz).status}</strong>
                                                     </span>{' '}
                                                     | <strong>Not available until</strong> {formatDateString(quiz.availableFromDate)} |
                                                     <br />
