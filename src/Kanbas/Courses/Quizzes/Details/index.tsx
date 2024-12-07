@@ -23,12 +23,16 @@ interface Quiz {
     availableUntilDate?: Date;
     published: boolean;
     quizType: "GRADED_QUIZ" | "PRACTICE_QUIZ" | "GRADED_SURVEY" | "UNGRADED_SURVEY";
+    assignmentGroup: "QUIZZES" | "EXAMS" | "ASSIGNMENTS" | "PROJECT";
     shuffleAnswers: boolean;
-    timeLimit?: number;
+    timeLimit: number;
     multipleAttempts: boolean;
-    maxAttempts?: number;
+    maxAttempts: number;
     showCorrectAnswers: boolean;
+    accessCode: string;
     oneQuestionAtATime: boolean;
+    webcamRequired: boolean;
+    lockQuestionsAfterAnswering: boolean;
     questions: Question[];
 }
 
@@ -249,6 +253,88 @@ function QuizDetails({ preview = false }: QuizDetailsProps) {
                             </div>
                             <div className="row mb-3">
                                 <div className="col-md-3">
+                                    <strong>Assignment Group:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.assignmentGroup}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <strong>Shuffle Answers:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.shuffleAnswers ? "Yes" : "No"}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <strong>Time Limit:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.timeLimit} Minutes
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <strong>Multiple Attempts:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.multipleAttempts ? "Yes" : "No"}
+                                </div>
+                            </div>
+                            {quiz.multipleAttempts && (
+                                <div className="row mb-3">
+                                    <div className="col-md-3">
+                                        <strong>Maximum Attempts:</strong>
+                                    </div>
+                                    <div className="col-md-9">
+                                        {quiz.maxAttempts}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <strong>Show Correct Answers:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.showCorrectAnswers ? "Yes" : "No"}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <strong>Access Code:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.accessCode ? quiz.accessCode : "None"}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <strong>One Question at a Time:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.oneQuestionAtATime ? "Yes" : "No"}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <strong>Webcam Required:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.webcamRequired ? "Yes" : "No"}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-3">
+                                    <strong>Lock Questions After Answering:</strong>
+                                </div>
+                                <div className="col-md-9">
+                                    {quiz.lockQuestionsAfterAnswering ? "Yes" : "No"}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-md-3">
                                     <strong>Due:</strong>
                                 </div>
                                 <div className="col-md-9">
@@ -269,22 +355,6 @@ function QuizDetails({ preview = false }: QuizDetailsProps) {
                                 </div>
                                 <div className="col-md-9">
                                     {formatDate(quiz.availableUntilDate)}
-                                </div>
-                            </div>
-                            <div className="row mb-3">
-                                <div className="col-md-3">
-                                    <strong>Time Limit:</strong>
-                                </div>
-                                <div className="col-md-9">
-                                    {quiz.timeLimit ? `${quiz.timeLimit} minutes` : "No time limit"}
-                                </div>
-                            </div>
-                            <div className="row mb-3">
-                                <div className="col-md-3">
-                                    <strong>Attempts:</strong>
-                                </div>
-                                <div className="col-md-9">
-                                    {quiz.multipleAttempts ? `${quiz.maxAttempts} attempts allowed` : "1 attempt only"}
                                 </div>
                             </div>
                         </div>

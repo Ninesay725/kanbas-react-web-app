@@ -1,4 +1,13 @@
-export const formatDate = (dateString: string | undefined) => {
+export function formatDateForInput(date: string | undefined): string {
+    if (!date) return "";
+    const d = new Date(date);
+    // Adjust for local timezone
+    const tzOffset = d.getTimezoneOffset() * 60000; // offset in milliseconds
+    const localDate = new Date(d.getTime() - tzOffset);
+    return localDate.toISOString().slice(0, 16);
+}
+
+export function formatDate(dateString: string | undefined) {
     if (!dateString) return 'Not set';
     // Add 'T00:00:00' if the date string doesn't include time
     const fullDateString = dateString.includes('T') ? dateString : `${dateString}T00:00:00`;
@@ -12,20 +21,4 @@ export const formatDate = (dateString: string | undefined) => {
     hours = hours % 12;
     hours = hours ? hours : 12; // the hour '0' should be '12'
     return `${month} ${day} at ${hours}:${minutes}${ampm}`;
-};
-
-export const formatDateForInput = (dateString: string | undefined) => {
-    if (!dateString) return '';
-    // Add 'T00:00:00' if the date string doesn't include time
-    const fullDateString = dateString.includes('T') ? dateString : `${dateString}T00:00:00`;
-    const date = new Date(fullDateString);
-    
-    // Use UTC methods to prevent timezone offset
-    const year = date.getUTCFullYear();
-    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
-    const day = date.getUTCDate().toString().padStart(2, '0');
-    const hours = date.getUTCHours().toString().padStart(2, '0');
-    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
+}

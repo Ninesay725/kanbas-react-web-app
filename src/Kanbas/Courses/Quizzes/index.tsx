@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { FaSearch, FaEllipsisV, FaTrash, FaCheckCircle, FaBan, FaPlus, FaCaretDown } from "react-icons/fa";
 import { BsGripVertical } from "react-icons/bs";
 import { Dropdown, Modal } from "react-bootstrap";
@@ -35,6 +35,7 @@ function QuizList() {
     const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
     const [courses, setCourses] = useState<any[]>([]);
     const [selectedCourse, setSelectedCourse] = useState<string>("");
+    const navigate = useNavigate();
 
     const fetchQuizzes = async () => {
         try {
@@ -78,8 +79,8 @@ function QuizList() {
                     quizType: "GRADED_QUIZ",
                     assignmentGroup: "QUIZZES"
                 };
-                await client.createQuiz(cid, newQuiz);
-                fetchQuizzes();
+                const createdQuiz = await client.createQuiz(cid, newQuiz);
+                navigate(`/Kanbas/Courses/${cid}/Quizzes/${createdQuiz._id}`);
             }
         } catch (error) {
             console.error("Error creating quiz:", error);

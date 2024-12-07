@@ -7,6 +7,9 @@ import { formatDateForInput } from "../../../utils/dateUtils";
 import QuizQuestions from "./QuizQuestions";
 import Preview from "../Preview";
 
+type QuizType = "GRADED_QUIZ" | "PRACTICE_QUIZ" | "GRADED_SURVEY" | "UNGRADED_SURVEY";
+type AssignmentGroup = "QUIZZES" | "EXAMS" | "ASSIGNMENTS" | "PROJECT";
+
 interface Quiz {
     _id?: string;
     title: string;
@@ -18,8 +21,8 @@ interface Quiz {
     published: boolean;
     questions: any[];
     course: string;
-    type: string;
-    assignmentGroup: string;
+    quizType: QuizType;
+    assignmentGroup: AssignmentGroup;
     shuffleAnswers: boolean;
     timeLimit: number;
     multipleAttempts: boolean;
@@ -42,7 +45,7 @@ function QuizEditor() {
         published: false,
         questions: [],
         course: cid || "",
-        type: "GRADED_QUIZ",
+        quizType: "GRADED_QUIZ",
         assignmentGroup: "QUIZZES",
         shuffleAnswers: true,
         timeLimit: 20,
@@ -123,8 +126,8 @@ function QuizEditor() {
             <Form.Group className="mb-3">
                 <Form.Label>Quiz Type</Form.Label>
                 <Form.Select
-                    value={quiz.type}
-                    onChange={(e) => setQuiz({ ...quiz, type: e.target.value })}
+                    value={quiz.quizType}
+                    onChange={(e) => setQuiz({ ...quiz, quizType: e.target.value as QuizType })}
                 >
                     <option value="GRADED_QUIZ">Graded Quiz</option>
                     <option value="PRACTICE_QUIZ">Practice Quiz</option>
@@ -137,7 +140,7 @@ function QuizEditor() {
                 <Form.Label>Assignment Group</Form.Label>
                 <Form.Select
                     value={quiz.assignmentGroup}
-                    onChange={(e) => setQuiz({ ...quiz, assignmentGroup: e.target.value })}
+                    onChange={(e) => setQuiz({ ...quiz, assignmentGroup: e.target.value as AssignmentGroup })}
                 >
                     <option value="QUIZZES">Quizzes</option>
                     <option value="EXAMS">Exams</option>
@@ -246,7 +249,10 @@ function QuizEditor() {
                 <Form.Control
                     type="datetime-local"
                     value={formatDateForInput(quiz.dueDate)}
-                    onChange={(e) => setQuiz({ ...quiz, dueDate: e.target.value })}
+                    onChange={(e) => {
+                        const date = e.target.value ? new Date(e.target.value) : undefined;
+                        setQuiz({ ...quiz, dueDate: date?.toISOString() });
+                    }}
                 />
             </Form.Group>
 
@@ -255,7 +261,10 @@ function QuizEditor() {
                 <Form.Control
                     type="datetime-local"
                     value={formatDateForInput(quiz.availableFromDate)}
-                    onChange={(e) => setQuiz({ ...quiz, availableFromDate: e.target.value })}
+                    onChange={(e) => {
+                        const date = e.target.value ? new Date(e.target.value) : undefined;
+                        setQuiz({ ...quiz, availableFromDate: date?.toISOString() });
+                    }}
                 />
             </Form.Group>
 
@@ -264,7 +273,10 @@ function QuizEditor() {
                 <Form.Control
                     type="datetime-local"
                     value={formatDateForInput(quiz.availableUntilDate)}
-                    onChange={(e) => setQuiz({ ...quiz, availableUntilDate: e.target.value })}
+                    onChange={(e) => {
+                        const date = e.target.value ? new Date(e.target.value) : undefined;
+                        setQuiz({ ...quiz, availableUntilDate: date?.toISOString() });
+                    }}
                 />
             </Form.Group>
         </Form>

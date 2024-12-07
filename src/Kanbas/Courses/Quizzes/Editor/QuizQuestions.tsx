@@ -73,17 +73,6 @@ function QuizQuestions({ questions, setQuestions }: QuizQuestionsProps) {
         }
     };
 
-    const updateChoice = (choiceIndex: number, newText: string) => {
-        if (tempQuestion && tempQuestion.type === "MULTIPLE_CHOICE" && tempQuestion.choices) {
-            const updatedChoices = [...tempQuestion.choices];
-            updatedChoices[choiceIndex] = newText;
-            setTempQuestion({
-                ...tempQuestion,
-                choices: updatedChoices
-            });
-        }
-    };
-
     const deleteChoice = (choiceIndex: number) => {
         if (tempQuestion && tempQuestion.type === "MULTIPLE_CHOICE" && tempQuestion.choices) {
             const updatedChoices = tempQuestion.choices.filter((_, i) => i !== choiceIndex);
@@ -182,13 +171,15 @@ function QuizQuestions({ questions, setQuestions }: QuizQuestionsProps) {
                                         type="text"
                                         value={choice}
                                         onChange={(e) => {
-                                            updateChoice(choiceIndex, e.target.value);
-                                            if (choice === tempQuestion.correctAnswer) {
-                                                setTempQuestion({
-                                                    ...tempQuestion,
-                                                    correctAnswer: e.target.value
-                                                });
-                                            }
+                                            const newValue = e.target.value;
+                                            const updatedChoices = [...tempQuestion.choices!];
+                                            updatedChoices[choiceIndex] = newValue;
+                                            
+                                            setTempQuestion({
+                                                ...tempQuestion,
+                                                choices: updatedChoices,
+                                                correctAnswer: choice === tempQuestion.correctAnswer ? newValue : tempQuestion.correctAnswer
+                                            });
                                         }}
                                         placeholder="Enter option text"
                                     />
