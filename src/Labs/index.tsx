@@ -14,7 +14,15 @@ export default function Labs() {
         <Provider store={store}>
             <div className="container-fluid">
                 <h1>Labs</h1>
-                by Xu Li, Section: 02
+                <div className="text-muted mt-2 mb-4">
+                    <div className="fw-bold mb-2">Team Members:</div>
+                    <ul className="list-unstyled ps-3">
+                        <li>• Xu Li <span className="badge bg-secondary ms-2">Section 02</span></li>
+                        <li>• Weijie Du <span className="badge bg-secondary ms-2">Section 02</span></li>
+                        <li>• Junren Zhu <span className="badge bg-secondary ms-2">Section 02</span></li>
+                        <li>• Jiadi Luo <span className="badge bg-secondary ms-2">Section 02</span></li>
+                    </ul>
+                </div>
                 <TOC />
                 <Routes>
                     <Route path="/" element={<Navigate to="Lab1" />} />

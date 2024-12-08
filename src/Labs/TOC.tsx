@@ -47,7 +47,7 @@ export default function TOC() {
             </li>
             <li className="nav-item">
                 <a id="wd-react-github" 
-                    href="https://github.com/Ninesay725/kanbas-react-web-app" 
+                    href="https://github.com/Ninesay725/kanbas-react-web-app/tree/quiz" 
                     target="_blank"
                     className="nav-link">
                     React Project
@@ -55,7 +55,7 @@ export default function TOC() {
             </li>
             <li className="nav-item">
                 <a id="wd-node-github" 
-                    href="https://github.com/Ninesay725/kanbas-node-server-app" 
+                    href="https://github.com/Ninesay725/kanbas-node-server-app/tree/quiz" 
                     target="_blank"
                     className="nav-link">
                     Node Project
