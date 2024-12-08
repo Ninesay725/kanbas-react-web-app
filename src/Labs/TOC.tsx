@@ -63,7 +63,7 @@ export default function TOC() {
             </li>
             <li className="nav-item">
                 <a id="wd-node-server" 
-                    href="https://kanbas-node-server-app-1-0nva.onrender.com" 
+                    href="https://kanbas-node-server-app-2-zaxa.onrender.com" 
                     target="_blank"
                     className="nav-link">
                     Node Server Root
