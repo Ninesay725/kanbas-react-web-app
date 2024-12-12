@@ -85,12 +85,19 @@ function QuizEditor() {
                 published: andPublish ? true : quiz.published
             };
             
+            let savedQuizId = qid;
             if (qid) {
                 await client.updateQuiz(qid, quizToSave);
-                navigate(`/Kanbas/Courses/${cid}/Quizzes/${qid}`);
             } else {
                 const createdQuiz = await client.createQuiz(cid || "", quizToSave);
-                navigate(`/Kanbas/Courses/${cid}/Quizzes/${createdQuiz._id}`);
+                savedQuizId = createdQuiz._id;
+            }
+
+            // Navigate to Quiz List for Save & Publish, Quiz Detail for Save
+            if (andPublish) {
+                navigate(`/Kanbas/Courses/${cid}/Quizzes`);
+            } else {
+                navigate(`/Kanbas/Courses/${cid}/Quizzes/${savedQuizId}`);
             }
         } catch (error) {
             console.error("Error saving quiz:", error);
